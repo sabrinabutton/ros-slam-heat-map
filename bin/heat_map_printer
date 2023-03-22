@@ -1,0 +1,60 @@
+#!/usr/bin/env python
+
+""" @package docstring
+    @author Sabrina Button
+    @date March 2023
+    @description Makes a heat map file when called 
+"""
+import rospy
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from nav_msgs.msg import OccupancyGrid # map created via LiDAR data
+
+raw_grid = None
+
+def confirm_map(grid):
+	raw_grid = grid
+
+def generate_heat_map(heat_map): # generates a heat map 
+	heat_map = np.array(heat_map)
+	result = heat_map.pivot(index='Yrows',columns='Xcols',values='Change')
+	    
+	# Define the plot
+	fig, ax = plt.subplots(figsize=(15,15))
+
+	# Add title to the Heat map
+	title = "Room Heat Map"
+
+	# Set the font size and the distance of the title from the plot
+	plt.title(title,fontsize=18)
+	ttl = ax.title
+	ttl.set_position([0.5,1.05])
+
+	# Hide ticks for X & Y axis
+	ax.set_xticks([])
+	ax.set_yticks([])
+		
+	# Remove the axes
+	x.axis('off')
+    
+    	sns.heatmap(result,annot=labels,fmt="",cmap='RdYlGn',linewidths=0.30,ax=ax)
+
+    	plt.savefig('foo.png') # save the heatmap	
+
+def heat_map_listener():
+	rospy.init_node('heat_map_printer', anonymous=False)
+	rospy.Subscriber('heat_map_sender', OccupancyGrid, confirm_map) #gets occupancy grid
+	rate = rospy.Rate(10)
+    
+if __name__ == '__main__':
+	try:
+		while raw_grid == None:
+    			heat_map_listener()
+	
+		# once we find the heat map, generate a file 
+		generate_heat_map(raw_grid)
+    
+	except rospy.ROSInterruptException:
+		pass
