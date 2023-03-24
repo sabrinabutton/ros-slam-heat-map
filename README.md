@@ -1,2 +1,1 @@
-ROS SLAM He
-at Map
+ROS SLAM Heat Map
