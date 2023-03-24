@@ -7,8 +7,8 @@
 """
 import rospy
 from std_msgs.msg import Int16
-from nav_msgs.msg import OccupancyGrid # map created via LiDAR data
-from geometry_msgs.msg import PoseStamped # robot pose
+from nav_msgs.msg import OccupancyGrid  # map created via LiDAR data
+from geometry_msgs.msg import PoseStamped  # robot pose
 
 
 def set_map(grid):
@@ -16,21 +16,19 @@ def set_map(grid):
 
 
 def map_listener():
-    
+
     rospy.init_node('map_listener', anonymous=False)
-  
-    rospy.Subscriber('map', OccupancyGrid, set_map) #gets occupancy grid
-    
+
+    rospy.Subscriber('map', OccupancyGrid, set_map)  # gets occupancy grid
+
     rate = rospy.Rate(10)
-    
-    
+
+
 if __name__ == '__main__':
     try:
 
-        
         map_listener()
         rospy.spin()
-     
-        
+
     except rospy.ROSInterruptException:
         pass

@@ -7,42 +7,48 @@
 """
 import rospy
 from std_msgs.msg import Int16
-from geometry_msgs.msg import PoseStamped # robot pose
+from geometry_msgs.msg import PoseStamped  # robot pose
+
 
 def set_co2(data):
     co2_ppm = data.data
-    
+
+
 def set_pose(pose):
     rospy.loginfo(pose)
     current_x = pose.position.x
     current_y = pose.position.y
 
 # map is a 2048 array
-def post_to_map(heat_map, x,y,ppm):
-	#write to the current coordinate 
-	x = int(x)
-	y = int(y)
- 	heat_map[x][y] = ppm
+
+
+def post_to_map(heat_map, x, y, ppm):
+    # write to the current coordinate
+    x = int(x)
+    y = int(y)
+    heat_map[x][y] = ppm
 
 
 def pose_ppm_listener():
-    
+
     rospy.init_node('tile_generator', anonymous=False)
-    rospy.Subscriber('sgp30_data', Int16, set_co2) # subscribes this node to sgp30 data to get the CO2 ppm
-    rospy.Subscriber('slam_out_pose', PoseStamped, set_pose) #gets robot pose without covariance
-    
+    # subscribes this node to sgp30 data to get the CO2 ppm
+    rospy.Subscriber('sgp30_data', Int16, set_co2)
+    # gets robot pose without covariance
+    rospy.Subscriber('slam_out_pose', PoseStamped, set_pose)
+
     rate = rospy.Rate(10)
-    
-    
+
+
 if __name__ == '__main__':
     try:
         co2_ppm = None
         current_x = None
         current_y = None
-        
+
         pose_ppm_listener()
-        
+
         rospy.spin()
-        
+
     except rospy.ROSInterruptException:
         pass
