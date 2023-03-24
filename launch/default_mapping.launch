@@ -1,0 +1,6 @@
+<launch>
+    <include file="$(find rplidar_ros)/launch/rplidar.launch" />
+    <include file="$(find hector_mapping)/launch/mapping_default.launch" />
+    <node pkg="heat_map" type="sgp30read" name="sgp30read"/>
+    <node pkg="heat_map" type="heat_map_generator" name="heat_map_generator"/>
+</launch>

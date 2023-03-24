@@ -12,11 +12,13 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from nav_msgs.msg import OccupancyGrid  # map created via LiDAR data
 
-raw_grid = None
-
+grid_found = False
 
 def confirm_map(grid):
-    raw_grid = grid
+    global grid_found 
+    grid_found = True
+    rospy.loginfo("got a grid")
+    generate_heat_map(grid)
 
 
 def generate_heat_map(heat_map):  # generates a heat map
@@ -43,8 +45,9 @@ def generate_heat_map(heat_map):  # generates a heat map
 
     sns.heatmap(result, annot=labels, fmt="",
                 cmap='RdYlGn', linewidths=0.30, ax=ax)
+    rospy.loginfo("attempting to print")
 
-    plt.savefig('foo.png')  # save the heatmap
+    plt.savefig('~/home/pi7/heat_maps/foo.png')  # save the heatmap
 
 
 def heat_map_listener():
@@ -56,10 +59,9 @@ def heat_map_listener():
 
 if __name__ == '__main__':
     try:
-        while raw_grid == None:
+        while grid_found is False:
             heat_map_listener()
-
-            # once we find the heat map, generate a file
-        generate_heat_map(raw_grid)
+            rospy.loginfo("here")
+    
     except rospy.ROSInterruptException:
         pass

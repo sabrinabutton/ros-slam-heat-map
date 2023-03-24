@@ -6,27 +6,30 @@
     @description Get CO2 data and current robot pose and publish it
 """
 import rospy
-
+import numpy as np
 from std_msgs.msg import Int16
 from nav_msgs.msg import OccupancyGrid  # map created via LiDAR data
 from geometry_msgs.msg import PoseStamped  # robot pose
 
-current_x = None
-current_y = None
-raw_grid = None
-ppm = None
+current_x = 0
+current_y = 0
+raw_grid = np.zeros(shape=(2048, 2048))
+ppm = 0
 
 
-def set_map(grid):
-    if raw_grid == None:
-        raw_grid = np.array(grid)  # convert to numpy array
+# def set_map(grid):
+#     global raw_grid
+#     if raw_grid == None:
+#         raw_grid = np.array(grid)  # convert to numpy array
 
 
-def set_pose(pose):
+def set_pose(pose_obj):
 
-    current_x = pose.position.x
-    current_y = pose.position.y
+    current_x = pose_obj.pose.position.x
+    current_y = pose_obj.pose.position.y
 
+def set_co2(co2):
+    ppm = co2.data
 
 # map is a 2048 array
 def post_to_map(heat_map, x, y, ppm):
@@ -34,17 +37,16 @@ def post_to_map(heat_map, x, y, ppm):
     x = int(x)
     y = int(y)
     heat_map[x][y] = ppm
-    pub.publish(heat_map)
+    rospy.loginfo("published a map!")
+    pub = rospy.Publisher('heat_map_sender', OccupancyGrid, queue_size=10)
+    pub.publish(data=heat_map)
     rospy.loginfo(heat_map)
 
 
 def map_listener():
     rospy.init_node('heat_map_generator', anonymous=False)
-
     # send previous heat map
-    rospy.Publisher('heat_map_sender', OccupancyGrid)
-
-    rospy.Subscriber('map', OccupancyGrid, set_map)  # gets occupancy grid
+    #rospy.Subscriber('map', OccupancyGrid, set_map)  # gets occupancy grid
     # subscribes this node to sgp30 data to get the CO2 ppm
     rospy.Subscriber('sgp30_data', Int16, set_co2)
     # gets robot pose without covariance
@@ -55,8 +57,10 @@ def map_listener():
 
 if __name__ == '__main__':
     try:
-
+        
         map_listener()
+        # if raw_grid != None:
+        rospy.loginfo("loopy") #PROBLEM NOT GETTING IN LOOP
         post_to_map(raw_grid, current_x, current_y, ppm)  # update map
         rospy.spin()
 
