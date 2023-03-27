@@ -10,12 +10,13 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-from nav_msgs.msg import OccupancyGrid  # map created via LiDAR data
+from std_msgs.msg import Int32MultiArray  # map created via LiDAR data
 
 grid_found = False
 
+
 def confirm_map(grid):
-    global grid_found 
+    global grid_found
     grid_found = True
     rospy.loginfo("got a grid")
     generate_heat_map(grid)
@@ -41,9 +42,9 @@ def generate_heat_map(heat_map):  # generates a heat map
     ax.set_yticks([])
 
     # Remove the axes
-    x.axis('off')
+    ax.axis('off')
 
-    sns.heatmap(result, annot=labels, fmt="",
+    sns.heatmap(result, fmt="",
                 cmap='RdYlGn', linewidths=0.30, ax=ax)
     rospy.loginfo("attempting to print")
 
@@ -52,7 +53,7 @@ def generate_heat_map(heat_map):  # generates a heat map
 
 def heat_map_listener():
     rospy.init_node('heat_map_printer', anonymous=False)
-    rospy.Subscriber('heat_map_sender', OccupancyGrid,
+    rospy.Subscriber('heat_map_sender', Int32MultiArray,
                      confirm_map)  # gets occupancy grid
     rate = rospy.Rate(10)
 
@@ -62,6 +63,6 @@ if __name__ == '__main__':
         while grid_found is False:
             heat_map_listener()
             rospy.loginfo("here")
-    
+
     except rospy.ROSInterruptException:
         pass
