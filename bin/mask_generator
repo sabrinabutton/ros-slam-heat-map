@@ -16,7 +16,13 @@ def set_map(grid):  # function that intakes an occupancy grid an outputs a Seabo
     grid = np.array(grid.data)
     room_layout = np.zeros_like(grid)
     # make a mask that covers where there are walls, i.e. when occupancy grid value is fairly certain
-    room_layout[grid >= 90] = True
+    # if there is a greater than 90 tile in grid, make a 4 by 4 square arounf that coordinate in room_layout
+    for i in range(len(grid)):  # iterate through the grid
+        for j in range(len(grid)):
+            if grid[i][j] >= 90:  # make our block (just so we can see it)
+                for k in range(-2, 3):
+                    for l in range(-2, 3):
+                        room_layout[i + k][j + l] = True
     # now we want to publish this room layout mask
     mask_publisher(room_layout)
 
