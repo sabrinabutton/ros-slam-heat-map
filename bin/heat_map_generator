@@ -40,7 +40,11 @@ def post_to_map(heat_map, x, y, ppm):
     # write to the current coordinate
     x = int(x)
     y = int(y)
-    heat_map[x][y] = ppm
+    # make a 9 by 9 circle around the current coordinate
+    for i in range(-4, 5):
+        for j in range(-4, 5):
+            if (i**2 + j**2) <= 16:
+                heat_map[x + i][y + j] = ppm
     rospy.loginfo(
         "Published a heat map grid from heat_map_generator node! It looks like this:")
     pub = rospy.Publisher('heat_map_sender', Int32MultiArray, queue_size=1)
