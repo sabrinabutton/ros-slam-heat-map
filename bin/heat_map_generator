@@ -21,7 +21,7 @@ ppm = None
 def set_map(grid):  # this should only ever run once to get the shape of the occupancy grid
     global raw_grid
     grid_shape = np.array(grid.data)  # creates a grid of zeros
-    raw_grid = np.zeros_like(grid_shape)
+    raw_grid = np.full(grid_shape.shape, 400)  # fill the grid with 400 ppm
 
 
 def set_pose(pose_obj):
