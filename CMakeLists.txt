@@ -159,9 +159,9 @@ include_directories(
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
    bin/sgp30read
-   bin/tile_generator
    bin/heat_map_generator
    bin/heat_map_printer
+   bin/mask_generator
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
