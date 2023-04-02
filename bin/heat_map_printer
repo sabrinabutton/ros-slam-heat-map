@@ -53,7 +53,6 @@ def generate_heat_map(heat_map, mask):  # generates a heat map
 
     # generate a random file name
     filename = file_name_gen()
-    plt.savefig('~/home/pi7/heat_maps/$filename.png')  # save the heatmap
 
     plt.savefig('~/home/pi7/heat_maps/' +
                 filename + '.png')  # save the heatmap
