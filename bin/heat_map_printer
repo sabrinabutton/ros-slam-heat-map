@@ -27,8 +27,8 @@ def set_heat_grid(grid):
     grid = grid.reshape(2048, 2048)
     heat_grid = grid
     rospy.loginfo(
-        "Got a grid (sent from heat_map_printer node)!")
-    rospy.loginfo(heat_grid)
+        "Got a grid (sent from heat_map_generator node)!")
+
     if type(heat_grid) != type(None) and type(room_mask) != type(None):
         generate_heat_map(heat_grid, room_mask)
 
@@ -91,6 +91,9 @@ def generate_heat_map(heat_map, mask):  # generates a heat map
     plt.savefig('/home/pi7/heat_maps/' +
                 filename + '.png')  # save the heatmap
 
+    rospy.loginfo("Saved a new heat map as " + filename + ".png!")
+    rospy.loginfo("Bye bye. Run me again for another heat map!")
+
     # kill this node
     os.system("rosnode kill heat_map_printer")
 
@@ -104,18 +107,17 @@ def file_name_gen():
 
 
 def heat_map_listener():
+    rospy.loginfo("hi")
     rospy.init_node('heat_map_printer', anonymous=False)
     rospy.Subscriber('heat_map_sender', Int32MultiArray,
-                     confirm_map)  # gets occupancy grid
-    rospy.Subscriber('mask_publisher', Int32MultiArray, )
+                     set_heat_grid)  # gets occupancy grid
+    rospy.Subscriber('mask_publisher', Int32MultiArray, set_mask)
 
 
 if __name__ == '__main__':
     try:
-        while heat_grid == None or room_mask == None:
-            heat_map_listener()
-
-        generate_heat_map(heat_grid, room_mask)
-
+        rospy.loginfo("hi1")
+        heat_map_listener()
+        rospy.spin()
     except rospy.ROSInterruptException:
         pass
