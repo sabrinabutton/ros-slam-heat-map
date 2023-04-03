@@ -10,6 +10,8 @@ import os
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import scipy
+from scipy import ndimage
 import matplotlib.pyplot as plt
 from std_msgs.msg import Int32MultiArray  # map created via LiDAR data
 
@@ -21,25 +23,34 @@ def set_heat_grid(grid):
     global heat_grid
     global room_mask
     grid = np.array(grid.data)
-    
-    grid = grid.reshape(2048,2048)
+
+    grid = grid.reshape(2048, 2048)
     heat_grid = grid
     rospy.loginfo(
         "Got a grid (sent from heat_map_printer node)!")
     rospy.loginfo(heat_grid)
     if type(heat_grid) != type(None) and type(room_mask) != type(None):
-            generate_heat_map(heat_grid, room_mask)
+        generate_heat_map(heat_grid, room_mask)
 
 
 def set_mask(mask):
     global room_mask
     mask = np.array(mask.data)
-    
-    mask = mask.reshape(2048,2048)
+
+    mask = mask.reshape(2048, 2048)
     room_mask = mask
     rospy.loginfo(
         "Got a mask (sent from mask_generator node)! ")
-   
+
+
+def apply_filter(img_, fltr, repeats=1):
+    img_filter = img_
+
+    for i in range(0, repeats):
+        img_filter = ndimage.convolve(
+            img_filter, fltr, mode='constant', cval=0.0)
+
+    return img_filter
 
 
 def generate_heat_map(heat_map, mask):  # generates a heat map
@@ -54,6 +65,11 @@ def generate_heat_map(heat_map, mask):  # generates a heat map
     x_max, y_max = coords.max(axis=0)
     room_layout = room_layout[x_min:x_max+1, y_min:y_max+1]
     heat_map = heat_map[x_min:x_max+1, y_min:y_max+1]
+
+    # apply a gaussian blur to the heat map
+    k = np.array([[1, 2, 1], [2, 4, 2], [1, 2, 1]])/16
+
+    heat_map = apply_filter(heat_map, k, repeats=40)
 
     # Define the plot
     fig, ax = plt.subplots(figsize=(15, 15))
@@ -90,17 +106,16 @@ def file_name_gen():
 def heat_map_listener():
     rospy.init_node('heat_map_printer', anonymous=False)
     rospy.Subscriber('heat_map_sender', Int32MultiArray,
-                     set_heat_grid)  # gets occupancy grid
-    rospy.Subscriber('mask_publisher', Int32MultiArray, set_mask)
+                     confirm_map)  # gets occupancy grid
+    rospy.Subscriber('mask_publisher', Int32MultiArray, )
 
 
 if __name__ == '__main__':
     try:
-        
-        heat_map_listener()
-        
+        while heat_grid == None or room_mask == None:
+            heat_map_listener()
 
-        rospy.spin()
+        generate_heat_map(heat_grid, room_mask)
 
     except rospy.ROSInterruptException:
         pass
