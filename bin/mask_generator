@@ -14,22 +14,23 @@ from std_msgs.msg import Int32MultiArray
 
 def set_map(grid):  # function that intakes an occupancy grid an outputs a Seaborn mask
     grid = np.array(grid.data)
+    grid = grid.reshape(2048,2048)
     room_layout = np.zeros_like(grid)
     # make a mask that covers where there are walls, i.e. when occupancy grid value is fairly certain
     # if there is a greater than 90 tile in grid, make a 6 by 6 square arounf that coordinate in room_layout
     for i in range(len(grid)):  # iterate through the grid
         for j in range(len(grid)):
-            if grid[i][j] >= 90:  # make our block (just so we can see it)
-                for k in range(-4, 5):
-                    for l in range(-4, 5):
-                        room_layout[i + k][j + l] = True
+            if grid[i][j] >= 95:  # make our block (just so we can see it)
+                room_layout[i][j] = True
     # now we want to publish this room layout mask
     mask_publisher(room_layout)
 
 
 def mask_publisher(mask):  # publishes a mask
+    mask_to_publish = mask.reshape(2048*2048)
     mask_pub = rospy.Publisher('mask_publisher', Int32MultiArray, queue_size=1)
-    mask_pub.publish(data=mask)
+    mask_pub.publish(data=tuple(mask_to_publish))
+    rospy.loginfo("Published a mask!")
 
 
 def grid_listener():

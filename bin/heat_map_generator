@@ -10,70 +10,111 @@ import numpy as np
 from std_msgs.msg import Int16
 from std_msgs.msg import Int32MultiArray  # map created via LiDAR data
 from geometry_msgs.msg import PoseStamped  # robot pose
+from geometry_msgs.msg import Pose
 from nav_msgs.msg import OccupancyGrid
+from nav_msgs.msg import MapMetaData
 
 current_x = None
 current_y = None
 zeros_grid = None
 ppm = None
+resolution = None
+origin_x = None
+origin_y = None
 
 
 def set_map(grid):  # this should only ever run once to get the shape of the occupancy grid
-    global raw_grid
-    grid_shape = np.array(grid.data)  # creates a grid of zeros
-    raw_grid = np.full(grid_shape.shape, 400)  # fill the grid with 400 ppm
+    global zeros_grid
 
+    grid_arr = np.array(grid.data)
+    grid_arr = grid_arr.reshape(2048,2048) 
+
+    
+    if type(zeros_grid) == type(None): # we only want to save if we didn't already have a grid
+        # we need to find the 0,0 of the grid!
+        
+        zeros_grid = np.full(grid_arr.shape, 400)  # fill the grid with 400 ppm
+      
 
 def set_pose(pose_obj):
+    
     global current_x
     global current_y
     current_x = pose_obj.pose.position.x
     current_y = pose_obj.pose.position.y
 
+def set_data(meta_data):
+    # this is the key to interpreting the pose
+    global resolution 
+    global origin_x
+    global origin_y
+
+    resolution = meta_data.resolution
+    origin_x = meta_data.origin.position.x
+    origin_y = meta_data.origin.position.y
 
 def set_co2(co2):
     global ppm
+    global current_x
+    global current_y
+    global zeros_grid
     ppm = co2.data
+    post_to_map(zeros_grid, current_x, current_y, ppm) 
 
 
 def post_to_map(heat_map, x, y, ppm):
-    # write to the current coordinate
-    x = int(x)
-    y = int(y)
-    # make a 9 by 9 circle around the current coordinate
-    for i in range(-4, 5):
-        for j in range(-4, 5):
-            if (i**2 + j**2) <= 16:
-                heat_map[x + i][y + j] = ppm
-    rospy.loginfo(
-        "Published a heat map grid from heat_map_generator node! It looks like this:")
-    pub = rospy.Publisher('heat_map_sender', Int32MultiArray, queue_size=1)
-    pub.publish(data=heat_map)
-    rospy.loginfo(heat_map)
+    
+    global resolution
+    global origin_x
+    global origin_y
+    # so the grid location of a meter value is meter/resolution
+    # this gives us a cell relative to the base_x
+    
+
+    if type(origin_x) != type(None) and type(heat_map) != type(None) and type(current_x) != type(None) and type(ppm) != type(None):
+        
+        base_x = origin_x / resolution
+        base_y = origin_y / resolution
+        
+        # write to the current coordinate
+        x = int(x / resolution + base_x)
+        y = int(y / resolution + base_y)
+
+        rospy.loginfo(x)
+      
+        # make a 9 by 9 circle around the current coordinate
+        for i in range(-4, 5):
+            for j in range(-4, 5):
+                if (i**2 + j**2) <= 16:
+                    heat_map[  x + i,  y + j] = ppm
+        # rospy.loginfo(
+        #     "Published a heat map grid from heat_map_generator node! It looks like this:")
+        pub = rospy.Publisher('heat_map_sender', Int32MultiArray, queue_size=1)
+        heat_to_publish = heat_map.reshape(2048*2048)
+        pub.publish(data=tuple(heat_to_publish))
+        rospy.loginfo("Published a heat map!")
+        #rospy.loginfo(heat_map)
 
 
 def map_listener():
-    global raw_grid
 
     rospy.init_node('heat_map_generator', anonymous=False)
 
-    if raw_grid == None:
-        # gets occupancy grid
-        rospy.Subscriber('map', OccupancyGrid, set_map)
+    # gets occupancy grid
+    rospy.Subscriber('map', OccupancyGrid, set_map)
     # subscribes this node to sgp30 data to get the CO2 ppm
     rospy.Subscriber('sgp30_data', Int16, set_co2)
     # gets robot pose without covariance
     rospy.Subscriber('slam_out_pose', PoseStamped, set_pose)
-
-    rate = rospy.Rate(10)
-
+    rospy.Subscriber('map_metadata', MapMetaData, set_data)
+    
+    
 
 if __name__ == '__main__':
     try:
         map_listener()
-        if raw_grid != None:
-            post_to_map(raw_grid, current_x, current_y, ppm)  # update map
-
+    
+        rate = rospy.Rate(10)
         rospy.spin()
 
     except rospy.ROSInterruptException:
