@@ -24,31 +24,33 @@ def set_heat_grid(grid):
     global room_mask
     grid = np.array(grid.data)
 
-    grid = grid.reshape(2048, 2048)
+    grid = grid.reshape(np.sqrt(len(grid.data)), np.sqrt(len(grid.data)))
     heat_grid = grid
     rospy.loginfo(
         "Got a grid (sent from heat_map_generator node)!")
 
+    # if we have both the heat grid and the room mask
     if type(heat_grid) != type(None) and type(room_mask) != type(None):
-        generate_heat_map(heat_grid, room_mask)
+        generate_heat_map(heat_grid, room_mask)  # generate the heat map
 
 
 def set_mask(mask):
     global room_mask
     mask = np.array(mask.data)
 
-    mask = mask.reshape(2048, 2048)
+    # reshape one dimensional tuple to a 2D matrix
+    mask = mask.reshape(np.sqrt(len(mask.data)), np.sqrt(len(mask.data)))
     room_mask = mask
     rospy.loginfo(
         "Got a mask (sent from mask_generator node)! ")
 
 
 def apply_filter(img_, fltr, repeats=1):
-    img_filter = img_
+    img_filter = img_  # copy the image so we don't modify the original
 
-    for i in range(0, repeats):
+    for i in range(0, repeats):  # apply the filter multiple times to blur the image further
         img_filter = ndimage.convolve(
-            img_filter, fltr, mode='constant', cval=0.0)
+            img_filter, fltr, mode='constant', cval=0.0)  # apply the filter via convolution of a passed kernel
 
     return img_filter
 
@@ -57,8 +59,6 @@ def generate_heat_map(heat_map, mask):  # generates a heat map
     heat_map = np.array(heat_map)
     room_layout = np.array(mask)
 
-    rospy.loginfo(np.amax(heat_map))
-
     # crop to where the building exists
     coords = np.argwhere(room_layout == True)
     x_min, y_min = coords.min(axis=0)
@@ -66,23 +66,24 @@ def generate_heat_map(heat_map, mask):  # generates a heat map
     room_layout = room_layout[x_min:x_max+1, y_min:y_max+1]
     heat_map = heat_map[x_min:x_max+1, y_min:y_max+1]
 
-    # apply a gaussian blur to the heat map
+    # This is a Kernel that will be used to blur the heat map
     k = np.array([[1, 2, 1], [2, 4, 2], [1, 2, 1]])/16
-
+    # apply a gaussian blur to the heat map via convolution
     heat_map = apply_filter(heat_map, k, repeats=40)
 
     # Define the plot
     fig, ax = plt.subplots(figsize=(15, 15))
 
     # Add title to the Heat map
-    title = "BMH 109 CO2 Concentration Map"
+    title = "Room CO2 Concentration Map"
 
-    # # Set the font size and the distance of the title from the plot
+    # Set the font size and the distance of the title from the plot
     plt.title(title, fontsize=18)
     ttl = ax.title
     ttl.set_position([0.5, 1.05])
 
-    g = sns.heatmap(heat_map, mask=room_layout, cmap='RdYlGn_r', square=True)
+    g = sns.heatmap(heat_map, mask=room_layout, cmap='RdYlGn_r',
+                    square=True)  # make the heatmap using seaborn
     g.set_facecolor('xkcd:black')  # this makes the mask black
 
     # generate a random file name
@@ -91,14 +92,16 @@ def generate_heat_map(heat_map, mask):  # generates a heat map
     plt.savefig('/home/pi7/heat_maps/' +
                 filename + '.png')  # save the heatmap
 
+    # Log info so we know it worked and what the file name is
     rospy.loginfo("Saved a new heat map as " + filename + ".png!")
     rospy.loginfo("Bye bye. Run me again for another heat map!")
 
-    # kill this node
+    # kill this node (we only want one heat map)
     os.system("rosnode kill heat_map_printer")
 
 
 def file_name_gen():
+    # Creates a random file name for the heat map as a string
     import random
     import string
     letters = string.ascii_lowercase
@@ -107,17 +110,15 @@ def file_name_gen():
 
 
 def heat_map_listener():
-    rospy.loginfo("hi")
-    rospy.init_node('heat_map_printer', anonymous=False)
+    rospy.init_node('heat_map_printer', anonymous=False)  # creates a node
     rospy.Subscriber('heat_map_sender', Int32MultiArray,
                      set_heat_grid)  # gets occupancy grid
-    rospy.Subscriber('mask_publisher', Int32MultiArray, set_mask)
+    rospy.Subscriber('mask_publisher', Int32MultiArray, set_mask)  # gets mask
 
 
 if __name__ == '__main__':
     try:
-        rospy.loginfo("hi1")
         heat_map_listener()
-        rospy.spin()
+        rospy.spin()  # keeps the node alive
     except rospy.ROSInterruptException:
         pass
