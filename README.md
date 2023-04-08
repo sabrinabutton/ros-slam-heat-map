@@ -6,7 +6,7 @@ This package is used in concurrance with a joy-pad controller package in order t
 
 ### How it works, technically
 
-![A diagram of the ROS package](infrastructure.png)
+![A diagram of the ROS package](images/infrastructure.png)
 
 _sgp30_read Node_
 
@@ -47,22 +47,22 @@ For production, the uploading of heat maps to an external database should be aut
 ### Heat Maps Generated Via Package
 
 The following images show heat maps generated using this package.
-![Proof of Concept: CO2 Concentration Heat Map of my Room](HM_room_variance.png)
+![Proof of Concept: CO2 Concentration Heat Map of my Room](images/HM_room_variance.png)
 _Figure 1: A map of my room displaying carbon dioxide concentration along the robot's path._
 
 Notice in Figure 4, there is no variance in the conentration of CO2 in my home. This is due to a limitation of the CO2 sensor used, which can only detect CO2 concentrations above 400 ppm. My house was all below this level at the time this was taken. Glad to have good ventilation!
 
-![Proof of Concept: CO2 Concentration Heat Map of My house](HM_sim_conv.png)
+![Proof of Concept: CO2 Concentration Heat Map of My house](images/HM_House.png)
 _Figure 4: A map of concentration throughout my house._(proofofconcept_concmap.png)
 
 ### Heat Maps Generated Via Simulation
 
 The following maps were generated using a simulation to test the algorithm. CO2 PPM values were randomly generated; the room layout is a simple square to demonstrate masking functionality.
 
-![Proof of Concept: CO2 Concentration Heat Map](HM_sim_noconv.png)
+![Proof of Concept: CO2 Concentration Heat Map](images/HM_sim_noconv.png)
 _Figure 3: A map of randomized CO2 concentrations without the application of a Gaussian Blur_
 
-![Proof of Concept: CO2 Concentration Heat Map, Gaussian Blur](HM_sim_conv.png)
+![Proof of Concept: CO2 Concentration Heat Map, Gaussian Blur](images/HM_sim_conv.png)
 _Figure 4: A map of randomized CO2 concentrations WITH the application of a Gaussian Blur_
 
 ## Ventus Robotics
@@ -75,4 +75,4 @@ Core competencies include:
 - Integration of easy-access web-based responsive user interfaces which communicate with our systems
 - Collection of requirements for complex consulting solutions
 - Engineering communications and project documentation
-  ![Ventus Robotics Logo](ventus_robotics_logo.png)
+  ![Ventus Robotics Logo](images/ventus_robotics_logo.png)
