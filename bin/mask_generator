@@ -8,39 +8,46 @@
 
 import rospy
 import numpy as np
-from nav_msgs.msg import OccupancyGrid
-from std_msgs.msg import Int32MultiArray
+
+# ROS messages
+from nav_msgs.msg import OccupancyGrid  # map created via LiDAR data
+from std_msgs.msg import Int32MultiArray  # message for mask
 
 
 def set_map(grid):  # function that intakes an occupancy grid an outputs a Seaborn mask
     grid = np.array(grid.data)
-    grid = grid.reshape(2048,2048)
+    # reshape one dimensional tuple to a 2D matrix
+    grid = grid.reshape(np.sqrt(len(grid.data)), np.sqrt(len(grid.data)))
     room_layout = np.zeros_like(grid)
     # make a mask that covers where there are walls, i.e. when occupancy grid value is fairly certain
-    # if there is a greater than 90 tile in grid, make a 6 by 6 square arounf that coordinate in room_layout
+    # if there is a greater than 95 tile in grid then it is a wall
     for i in range(len(grid)):  # iterate through the grid
         for j in range(len(grid)):
-            if grid[i][j] >= 95:  # make our block (just so we can see it)
+            if grid[i][j] >= 95:
+                # we set the mask to true where there is a wall, which means "true, we do want to cover up the heat map at this cell"
                 room_layout[i][j] = True
     # now we want to publish this room layout mask
     mask_publisher(room_layout)
 
 
-def mask_publisher(mask):  # publishes a mask
-    mask_to_publish = mask.reshape(2048*2048)
-    mask_pub = rospy.Publisher('mask_publisher', Int32MultiArray, queue_size=1)
-    mask_pub.publish(data=tuple(mask_to_publish))
+def mask_publisher(mask):  # function that publishes the mask
+    # reshape the mask to a 1D tuple
+    mask_to_publish = mask.reshape(len(mask[0])*len(mask[0]))
+    mask_pub = rospy.Publisher(
+        'mask_publisher', Int32MultiArray, queue_size=1)  # create a publisher
+    mask_pub.publish(data=tuple(mask_to_publish))  # publish the mask
     rospy.loginfo("Published a mask!")
 
 
 def grid_listener():
-    rospy.init_node('mask_generator', anonymous=False)
+    rospy.init_node('mask_generator', anonymous=False)  # initialize the node
+    # subscribe to the occupancy grid
     rospy.Subscriber('map', OccupancyGrid, set_map)
 
 
 if __name__ == '__main__':
     try:
         grid_listener()
-        rospy.spin()
+        rospy.spin()  # keep the node running
     except rospy.ROSInterruptException:
         pass
