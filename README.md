@@ -57,13 +57,40 @@ _Figure 4: A map of concentration throughout my house._(proofofconcept_concmap.p
 
 ### Heat Maps Generated Via Simulation
 
-The following maps were generated using a simulation to test the algorithm. CO2 PPM values were randomly generated; the room layout is a simple square to demonstrate masking functionality.
+The following maps were generated using a simulation to test the algorithm. CO2 PPM values were randoly generated; the room layout is a simple square to demonstrate masking functionality.
 
 ![Proof of Concept: CO2 Concentration Heat Map](images/HM_sim_noconv.png)
 _Figure 3: A map of randomized CO2 concentrations without the application of a Gaussian Blur_
 
 ![Proof of Concept: CO2 Concentration Heat Map, Gaussian Blur](images/HM_sim_conv.png)
 _Figure 4: A map of randomized CO2 concentrations WITH the application of a Gaussian Blur_
+
+## Steps to make this work for your project if you want to map something other than CO2, or use a different sensor
+
+1. Change _bin/sgp30read_ to read your sensor. Change the ROS publisher name to something that makes more sense for your new reading.
+
+```
+def CO2_publisher():
+    # Change the name of your publisher and this node to align with your new hardware.
+    pub = rospy.Publisher('sgp30_data', Int16, queue_size=10)
+    rospy.init_node('sgp30read', anonymous=False)
+    rate = rospy.Rate(10)
+    while not rospy.is_shutdown():
+        # Here, make "co2_now" into the variable that holds your sensor data
+        co2_now = sgp30.eCO2
+        rospy.loginfo(co2_now)
+        pub.publish(co2_now)
+        rate.sleep()
+```
+
+2. In _bin/heat_map_generator_
+
+```
+# Change this line to match your publisher name in bin/sgp30read
+rospy.Subscriber('sgp30_data', Int16, set_co2)
+```
+
+That's it!
 
 ## Ventus Robotics
 
