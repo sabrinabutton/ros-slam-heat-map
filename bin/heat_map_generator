@@ -3,17 +3,20 @@
 """ @package docstring
     @author Sabrina Button
     @date March 2023
-    @description Build a CO2 concentration heat map grid based on CO2 data and robot pose
+    @description Build a CO2 concentration heat map grid based on CO2 data and robot position
 """
 import rospy
 import numpy as np
-from std_msgs.msg import Int16
-from std_msgs.msg import Int32MultiArray  # map created via LiDAR data
-from geometry_msgs.msg import PoseStamped  # robot pose
-from geometry_msgs.msg import Pose
-from nav_msgs.msg import OccupancyGrid
-from nav_msgs.msg import MapMetaData
 
+# import ROS messages
+from std_msgs.msg import Int16  # CO2 data
+from std_msgs.msg import Int32MultiArray  # map created via LiDAR data
+from geometry_msgs.msg import PoseStamped  # robot pose (without covariance)
+from geometry_msgs.msg import Pose  # robot pose (for origin)
+from nav_msgs.msg import OccupancyGrid  # map created via LiDAR data
+from nav_msgs.msg import MapMetaData  # map metadata
+
+# global variables, constantly updated
 current_x = None
 current_y = None
 zeros_grid = None
@@ -23,81 +26,87 @@ origin_x = None
 origin_y = None
 
 
-def set_map(grid):  # this should only ever run once to get the shape of the occupancy grid
+def set_map(grid):
     global zeros_grid
 
-    grid_arr = np.array(grid.data)
-    grid_arr = grid_arr.reshape(2048,2048) 
+    grid_arr = np.array(grid.data)  # convert to numpy array
+    grid_arr = grid_arr.reshape(np.sqrt(len(grid.data)), np.sqrt(
+        len(grid.data)))  # reshape one dimensional tuple to a 2D matrix
 
-    
-    if type(zeros_grid) == type(None): # we only want to save if we didn't already have a grid
-        # we need to find the 0,0 of the grid!
-        
-        zeros_grid = np.full(grid_arr.shape, 400)  # fill the grid with 400 ppm
-      
+    if type(zeros_grid) == type(None):  # we only want to save if we didn't already have a grid
+        # make a grid of equal size and fill the grid with 400 ppm
+        zeros_grid = np.full(grid_arr.shape, 400)
+
 
 def set_pose(pose_obj):
-    
+    # extract and save the robots position (x,y) from the pose, in meters, and save them
     global current_x
     global current_y
     current_x = pose_obj.pose.position.x
     current_y = pose_obj.pose.position.y
 
+
 def set_data(meta_data):
     # this is the key to interpreting the pose
-    global resolution 
+    global resolution
     global origin_x
     global origin_y
 
+    # this tells us how many meters are in each cell so we can plot the robot position in the grid
     resolution = meta_data.resolution
+    # this tells us where the robot starts in the world
     origin_x = meta_data.origin.position.x
+    # this tells us where the robot starts in the world
     origin_y = meta_data.origin.position.y
+
 
 def set_co2(co2):
     global ppm
     global current_x
     global current_y
     global zeros_grid
-    ppm = co2.data
-    post_to_map(zeros_grid, current_x, current_y, ppm) 
+    ppm = co2.data  # save the co2 data
+    # post the co2 data to the grid
+    post_to_map(zeros_grid, current_x, current_y, ppm)
 
 
 def post_to_map(heat_map, x, y, ppm):
-    
+
     global resolution
     global origin_x
     global origin_y
-    # so the grid location of a meter value is meter/resolution
-    # this gives us a cell relative to the base_x
-    
 
-    if type(origin_x) != type(None) and type(heat_map) != type(None) and type(current_x) != type(None) and type(ppm) != type(None):
-        
+    # run this if everything is defined. If not, don't do anything
+    if type(origin_x) != type(None) and type(heat_map) != type(None) and type(x) != type(None) and type(ppm) != type(None):
+
+        # the grid location of a meter value is meter/resolution
+        # this gives us the base cell (where the robot begins in terms of the grid)
         base_x = origin_x / resolution
         base_y = origin_y / resolution
-        
-        # write to the current coordinate
+
+        # convert the x and y values to valid grid coordinates
         x = int(x / resolution + base_x)
         y = int(y / resolution + base_y)
 
-        rospy.loginfo(x)
-      
-        # make a 9 by 9 circle around the current coordinate
+        rospy.loginfo(x)  # for debugging
+
+        # plot CO2 conc. as a 9 by 9 circle around the current coordinate, just so this plot point is visible in a larger grid
         for i in range(-4, 5):
             for j in range(-4, 5):
                 if (i**2 + j**2) <= 16:
-                    heat_map[  x + i,  y + j] = ppm
-        # rospy.loginfo(
-        #     "Published a heat map grid from heat_map_generator node! It looks like this:")
+                    heat_map[x + i,  y + j] = ppm
+
+        # create a publisher
         pub = rospy.Publisher('heat_map_sender', Int32MultiArray, queue_size=1)
+        # reshape the grid to a 1D array to publish (this is the format the map server expects)
         heat_to_publish = heat_map.reshape(2048*2048)
-        pub.publish(data=tuple(heat_to_publish))
+        pub.publish(data=tuple(heat_to_publish))  # publish the data
         rospy.loginfo("Published a heat map!")
-        #rospy.loginfo(heat_map)
 
 
 def map_listener():
 
+    # initialize the node
     rospy.init_node('heat_map_generator', anonymous=False)
 
     # gets occupancy grid
@@ -106,16 +115,16 @@ def map_listener():
     rospy.Subscriber('sgp30_data', Int16, set_co2)
     # gets robot pose without covariance
     rospy.Subscriber('slam_out_pose', PoseStamped, set_pose)
+    # gets map origin (where the robot begins, in meters) and resolution (meters/grid cell)
     rospy.Subscriber('map_metadata', MapMetaData, set_data)
-    
-    
+
 
 if __name__ == '__main__':
     try:
         map_listener()
-    
-        rate = rospy.Rate(10)
-        rospy.spin()
+
+        rate = rospy.Rate(10)  # 10hz
+        rospy.spin()  # keeps the node alive
 
     except rospy.ROSInterruptException:
         pass
