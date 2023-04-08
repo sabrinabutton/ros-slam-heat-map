@@ -3,7 +3,7 @@
 """ @package docstring
     @author Sabrina Button
     @date March 2023
-    @description Makes a heat map file when called 
+    @description Makes a heat map file (png) when called 
 """
 import rospy
 import os
