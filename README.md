@@ -4,7 +4,7 @@ A ROS package which utilizes Simultaneous Localization and Mapping (SLAM) via He
 
 This package is used in concurrance with a joy-pad controller package in order to guide the rover around the room to collect data and make air-quality maps.
 
-### How it works, technically
+### Technical Overview
 
 ![A diagram of the ROS package](images/infrastructure.png)
 
@@ -48,7 +48,7 @@ For production, the uploading of heat maps to an external database should be aut
 
 The following images show heat maps generated using this package.
 ![Proof of Concept: CO2 Concentration Heat Map of my Room](images/HM_room_variance.png)
-_Figure 1: A map of my room displaying carbon dioxide concentration along the robot's path._
+_Figure 1: A map of my room displaying carbon dioxide concentration along the robot's path.
 
 Notice in Figure 4, there is no variance in the conentration of CO2 in my home. This is due to a limitation of the CO2 sensor used, which can only detect CO2 concentrations above 400 ppm. My house was all below this level at the time this was taken. Glad to have good ventilation!
 
