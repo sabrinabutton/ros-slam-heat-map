@@ -50,14 +50,14 @@ The following images show heat maps generated using this package.
 ![Proof of Concept: CO2 Concentration Heat Map of my Room](images/HM_room_variance.png)
 _Figure 1: A map of my room displaying carbon dioxide concentration along the robot's path.
 
-Notice in Figure 4, there is no variance in the conentration of CO2 in my home. This is due to a limitation of the CO2 sensor used, which can only detect CO2 concentrations above 400 ppm. My house was all below this level at the time this was taken. Glad to have good ventilation!
+Notice in Figure 4, there is no variance in the concentration of CO2 in my home. This is due to a limitation of the CO2 sensor used, which can only detect CO2 concentrations above 400 ppm. My entire house was below this level at the time this was taken.
 
 ![Proof of Concept: CO2 Concentration Heat Map of My house](images/HM_House.png)
 _Figure 4: A map of concentration throughout my house._(proofofconcept_concmap.png)
 
 ### Heat Maps Generated Via Simulation
 
-The following maps were generated using a simulation to test the algorithm. CO2 PPM values were randoly generated; the room layout is a simple square to demonstrate masking functionality.
+The following maps were generated using a simulation to test the algorithm. CO2 PPM values were randomly generated; the room layout is a simple square to demonstrate masking functionality.
 
 ![Proof of Concept: CO2 Concentration Heat Map](images/HM_sim_noconv.png)
 _Figure 3: A map of randomized CO2 concentrations without the application of a Gaussian Blur_
@@ -94,7 +94,7 @@ That's it!
 
 ## Ventus Robotics
 
-Ventus Robotics is a (ficticious) leading environmental monitoring company.”Ventus”, Latin for ”wind”, conveys the company’s specialization
+Ventus Robotics is a (fictitious) leading environmental monitoring company.”Ventus”, Latin for ”wind”, conveys the company’s specialization
 in monitoring air quality and illustrates the elegant yet dynamic nature of their robotic solutions.
 Core competencies include:
 
